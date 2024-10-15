@@ -55,6 +55,8 @@ function cutcuss_page_html()
         echo '<div class="error notice"><p>Submission Failed</p></div>';
     }
 
+    $words = get_words();
+
 ?>
     <div class="wrap">
         <h1>Cutcuss Plugin</h1>
@@ -70,7 +72,54 @@ function cutcuss_page_html()
             </table>
             <?php submit_button(); ?>
         </form>
+
+        <ul class="word-list">
+            <?php foreach ($words as $word): ?>
+                <li id="<?php echo $word['id']; ?>">
+                    <span class="word"><?php echo $word['word']; ?></span>
+                    <a href="#" class="delete">Delete</a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
     </div>
+    <style>
+        .word-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .word-list li {
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .word-list li:last-child {
+            border-bottom: none;
+        }
+
+        .word {
+            flex: 1;
+        }
+
+        .delete {
+            color: red;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .delete:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
 
 <?php
 }
@@ -100,8 +149,19 @@ function insert_word($word)
         array(
             'word' => $word
         ),
-        array(
-            '%s', // Data type for 'name' (string)
-        )
+        array('%s')
     );
+}
+function get_words()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'cutcuss_words';
+
+    $results = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
+
+    if (!empty($results)) {
+        return $results;
+    } else {
+        return [];
+    }
 }
