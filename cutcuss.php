@@ -54,6 +54,9 @@ function cutcuss_page_html()
     } elseif (isset($_GET['status']) && $_GET['status'] == 'error') {
         echo '<div class="error notice"><p>Submission Failed</p></div>';
     }
+    if (isset($_GET['deleted']) && $_GET['deleted'] == 'true') {
+        echo '<div class="updated notice"><p>Deleted Successdul</p></div>';
+    }
 
     $words = get_words();
 
@@ -75,9 +78,13 @@ function cutcuss_page_html()
 
         <ul class="word-list">
             <?php foreach ($words as $word): ?>
+                <?php
+                $delete_nonce = wp_create_nonce('cutcuss_delete_nonce');
+                $delete_url = esc_url(admin_url('admin-post.php?action=cutcuss_delete_item&id=' . $word['id'] . '&_wpnonce=' . $delete_nonce));
+                ?>
                 <li id="<?php echo $word['id']; ?>">
-                    <span class="word"><?php echo $word['word']; ?></span>
-                    <a href="#" class="delete">Delete</a>
+                    <span class="word"><?php echo esc_html($word['word']); ?></span>
+                    <a href="<?php echo $delete_url ?>" class="delete">Delete</a>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -164,4 +171,35 @@ function get_words()
     } else {
         return [];
     }
+}
+function cutcuss_delete_item()
+{
+    if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'cutcuss_delete_nonce')) {
+        if (isset($_GET['id'])) {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'cutcuss_words';
+            $id = intval($_GET['id']);
+
+            $wpdb->delete($table_name, array('id' => $id));
+
+            wp_redirect(admin_url('admin.php?page=cutcuss&deleted=true'));
+            exit();
+        }
+    } else {
+        wp_die('Nonce verification failed.');
+    }
+}
+add_action('admin_post_cutcuss_delete_item', 'cutcuss_delete_item');
+
+add_filter('wp_insert_post_data', 'cutcuss_modify_post_before_save', 10, 2);
+
+function cutcuss_modify_post_before_save($data, $postarr)
+{
+    // Modify post title and content if post type is 'post'
+    if ($data['post_type'] === 'post') {
+        $data['post_title'] .= ' - Modified by Plugin';
+        $data['post_content'] .= '<p>This content was modified by my plugin.</p>';
+    }
+
+    return $data;
 }
