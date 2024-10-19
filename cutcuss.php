@@ -195,11 +195,21 @@ add_filter('wp_insert_post_data', 'cutcuss_modify_post_before_save', 10, 2);
 
 function cutcuss_modify_post_before_save($data, $postarr)
 {
-    // Modify post title and content if post type is 'post'
-    if ($data['post_type'] === 'post') {
-        $data['post_title'] .= ' - Modified by Plugin';
-        $data['post_content'] .= '<p>This content was modified by my plugin.</p>';
-    }
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'cutcuss_words';
+
+    $post_content = $postarr['post_content'];
+
+    $badwords = $wpdb->get_col("SELECT word FROM $table_name");
+
+    $pattern = '/(' . implode('|', array_map('preg_quote', $badwords)) . ')/i';
+
+    $modified_content = preg_replace_callback($pattern, function ($matches) {
+        return preg_replace('/[aeiou]/i', '*', $matches[0]);
+    }, $post_content);
+
+    $data['post_content'] = $modified_content;
+
 
     return $data;
 }
