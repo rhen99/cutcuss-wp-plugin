@@ -8,6 +8,15 @@ License: GPL2
 */
 function cutcuss_activation()
 {
+    cutcuss_create_table();
+    cutcuss_insert_data();
+}
+register_activation_hook(__FILE__, 'cutcuss_activation');
+function cutcuss_deactivation() {}
+register_deactivation_hook(__FILE__, 'cutcuss_deactivation');
+
+function cutcuss_create_table()
+{
     global $wpdb;
     $table_name = $wpdb->prefix . "cutcuss_words";
     $charset_collate = $wpdb->get_charset_collate();
@@ -22,9 +31,28 @@ function cutcuss_activation()
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
 }
-register_activation_hook(__FILE__, 'cutcuss_activation');
-function cutcuss_deactivation() {}
-register_deactivation_hook(__FILE__, 'cutcuss_deactivation');
+function cutcuss_insert_data()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . "cutcuss_words";
+
+    $row_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+    if ($row_count == 0) {
+        $sql = "INSERT INTO $table_name (word) VALUES
+            ('shit'),
+            ('fuck'),
+            ('ass'),
+            ('asshole'),
+            ('damn'),
+            ('retard'),
+            ('faggot'),
+            ('dyke'),
+            ('nigga');";
+
+        $wpdb->query($sql);
+    }
+}
 
 function cutcuss_menu()
 {
